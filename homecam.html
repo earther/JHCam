@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link rel="shortcut icon" href="favicon.ico" />
+<title>JHCam</title>
+<style type="text/css">
+@import url(doc/common.css);
+table, td { border:0 none; margin:0; padding:0; }
+a { color:gray; text-decoration:none; background:silver; border:1px solid black; border-top-color:white; border-left-color:white; }
+a span { padding:1px 5px; border:1px solid gray; border-top-color:white; border-left-color:white; }
+a:hover { color:blue; }
+a.disabled { color:black; cursor:default; background:white; border:1px solid white; border-top-color:black; border-left-color:black; }
+a.disabled span { border:1px solid white; border-top-color:gray; border-left-color:gray; }
+</style>
+<script type="text/javascript" src="doc/jquery.js"></script>
+<script type="text/javascript" src="doc/jquery.cookie.js"></script>
+<script type="text/javascript">
+var minDelay = 400;
+var maxDelay = 15000;
+var allowance = 0;
+var lastRequest = new Date().getTime();
+var preferredCaptureDevice = '';
+var preferredResolution = '';
+var preferredFormat = '';
+var base = '';
+$.padField = function(val,length,padChar,atLeft) {
+	if (length <= 0) return;
+	if (padChar === undefined) padChar = '0';
+	if (atLeft === undefined) atLeft = true;
+	var val = val || '';
+	for (var i=val.length; i < length; ++i) {
+		if (atLeft) val = padChar + val;
+		else val += padChar;
+	}
+	return val;
+};
+
+function init() {
+	var _allowance = parseInt($.cookie('homecamAllowance'),10);
+	if (!isNaN(_allowance)) adjustAllowance(_allowance);
+	$('#holder').load(function() {
+		var delay = new Date().getTime() - lastRequest;
+		var timeout = Math.min( Math.max(delay + allowance,minDelay), maxDelay );
+		var prm = document.getElementById('holder').src;
+		prm = prm.substring(prm.indexOf('q=') + 2);
+		if (prm.indexOf('&') > 0) prm = prm.substring(0, prm.indexOf('&'));
+		$('#requestId').html(prm);
+		$('#requestElapsed').html($.padField(''+delay,6,'_').replace(/_/g,'&nbsp;'));
+		$('#requestWait').html($.padField(''+timeout,6,'_').replace(/_/g,'&nbsp;'));
+		setTimeout('reload()',timeout);
+	});
+	reload();
+}
+
+function reload() {
+	lastRequest = new Date().getTime();
+	var prm = (new Date()).getTime().toString(36).split("").reverse().join("");
+	var src = $.cookie('d') || '/homecam.Capturer.action';
+	src = base + src + '?' + $.param({
+		q: prm, c: preferredCaptureDevice, r: preferredResolution, f: preferredFormat
+	});
+	var dd = prm + ': now loading';
+	$('#requestId').html(prm);
+	document.getElementById('holder').src = src;
+}
+
+function adjustAllowance(diff) {
+	allowance += diff;
+	document.getElementById('allowance').innerHTML = -allowance;
+	$.cookie('homecamAllowance',allowance,{expires:9999,path:'/'});
+}
+
+var recorder = {
+	start: function() {
+		recorder.command('record-start');
+	},
+	stop: function() {
+		recorder.command('record-stop');
+	},
+	download: function() {
+		$('#downloadForm').get(0).submit();
+	},
+	command: function(command) {
+		$.post('homecam.Recorder.action', { command: command }, function(data, textStatus, jqXHR) {
+			alert(data);
+		}, 'text');
+	}
+};
+
+var capturer = {
+	selectDevice: function() {
+		$.post(base + '/homecam.Capturer.action',
+			{ c: 'listDevices' },
+			function(data, textStatus, jqXHR) {
+				$('#devices').html('<select>'+data+'</select>');
+				$('#devices select').change(function() {
+					preferredCaptureDevice = this.value;
+				});
+			}, 'html'
+		);
+	},
+	selectResolutions: function() {
+		$.post(base + '/homecam.Capturer.action',
+			{ c: 'listResolutions' },
+			function(data, textStatus, jqXHR) {
+				$('#resolutions').html('<select>'+data+'</select>');
+				$('#resolutions select').change(function() {
+					preferredResolution = this.value;
+				});
+			}, 'html'
+		);
+	},
+	selectFormat: function() {
+		$.post(base + '/homecam.Capturer.action',
+			{ f: 'listFormats' },
+			function(data, textStatus, jqXHR) {
+				$('#formats').html('<select>'+data+'</select>');
+				$('#formats select').change(function() {
+					preferredFormat = this.value;
+					var e = $('#formats select').get(0);
+					var groups = /(\d+) x (\d+) @(\d+)fps/.exec(e.options[e.selectedIndex].text);
+					$('#holder').width(''+groups[1]+'px').height(''+groups[2]+'px');
+				});
+			}, 'html'
+		);
+	}
+};
+</script>
+</head>
+<body onload="init()">
+<div id="outer">
+	<div style="padding:2px">
+		<div id="devices" style="margin-right:2px;float:left;"><a href="javascript:void(0)" onclick="capturer.selectDevice()">Change Device</a></div>
+		<div style="float:right">
+			Speed: <span id="allowance">0</span>
+			<a href="javascript:void();" onclick="adjustAllowance(2000); return false;">&nbsp; - &nbsp;</a>
+			<a href="javascript:void();" onclick="adjustAllowance(-2000); return false;">&nbsp; + &nbsp;</a>
+			<a href="javascript:void();" onclick="adjustAllowance(-allowance); return false;">&nbsp; 0 &nbsp;</a>
+			<a href="javascript:void();" onclick="recorder.start(); return false;">Recording Start</a>
+			<a href="javascript:void();" onclick="recorder.stop(); return false;">Stop</a>
+			<a href="javascript:void();" onclick="recorder.download(); return false;">Download</a>
+		</div>
+		<div id="timer" style="padding:4px; margin-left:2px;color:gray;font-family:'Courier New',monospace"><span id="requestId"></span>: elapsed <span id="requestElapsed"></span>ms, wait <span id="requestWait"></span>ms</div>
+	</div>
+	<div id="wrapper"><img id="holder" mstyle="width:1280px;height:1024px" src="default.jpg" alt="homecam.Capturer" /></div>
+
+	<form id="downloadForm" style="display:none" action="homecam.Recorder.action" method="POST">
+		<input type="hidden" name="command" value="record-download" />
+	</form>
+</div>
+</body>
+</html>

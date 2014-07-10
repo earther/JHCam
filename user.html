@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<title>JHCam</title>
+<style type="text/css">
+@import url(doc/common.css);
+@import url(doc/form.css);
+th { text-align:right; } 
+</style>
+</head>
+<body>
+<form action="homecam.User.action" method="POST">
+	<table>
+		<tr><th>User:</th><td><input type="text" name="username" /></td></tr>
+		<tr><th>Old Password 1:</th><td><input type="password" name="po1" /></td></tr>
+		<tr><th>Old Password 2:</th><td><input type="password" name="po2" /></td></tr>
+		<tr><th>New Password 1:</th><td><input type="password" name="pn1" /></td></tr>
+		<tr><th>Re-type Password 1:</th><td><input type="password" name="pr1" /></td></tr>
+		<tr><th>New Password 2:</th><td><input type="password" name="pn2" /></td></tr>
+		<tr><th>Re-type Password 2:</th><td><input type="password" name="pr2" /></td></tr>
+	</table>
+	<input type="submit" name="action" value="Change Password" />
+</form>
+<hr />
+<form action="homecam.User.action" method="POST">
+	<input type="text" name="username" />
+	<input type="submit" name="action" value="Register Browser" />
+</form>
+</body>
+</html>

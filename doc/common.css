@@ -1,0 +1,6 @@
+body { font-family:sans-serif; background-color:silver; margin:0; padding:0;  }
+table { border-collapse:collapse; }
+th, td { border:1px solid white; padding:1px 1ex; }
+th { text-align:right; }
+td { text-align:left; }
+table.right-table th, table.right-table td { text-align:right; }

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<title>JHCam</title>
+<style type="text/css">
+@import url(doc/common.css);
+@import url(doc/form.css);
+</style>
+<script type="text/javascript" src="doc/jquery.js"></script>
+<script type="text/javascript" src="doc/sha256.js"></script>
+<script type="text/javascript">
+function randomChar(src,n) {
+	var rand = '';
+	for (var i=0; i < n; ++i) {
+		var p = Math.floor(Math.random()*src.length);
+		rand += src.substr(p,1);
+	}
+	return rand;
+}
+
+function fillSubmit() {
+	var src = '1234567890abcdef';
+	var n = randomChar(src,64);
+	var t = (new Date()).getTime();
+	var digest = n + ' ' + t + ' ' + $('#p').val();
+	$('#p').val( SHA256(t.toString(36).split('').reverse().join('')) );
+	$('#q').val( t.toString(36) );
+	$('#z').val( randomChar(src,64) );
+	$('#s').val( SHA256(digest) );
+	$('#t').val( t );
+	$('#n').val( n );
+}
+</script>
+</head>
+<body>
+	<form action="/" method="POST" onsubmit="fillSubmit();">
+		<input type="hidden" name="n" id="n" />
+		<input type="hidden" name="t" id="t" />
+		<input type="hidden" name="s" id="s" />
+		<input type="hidden" name="z" id="z" />
+		<input type="hidden" name="q" id="q" />
+		<input type="password" name="p" id="p" />
+		<input type="submit" />
+	</form>
+</body>
+</html>
